@@ -1,0 +1,5 @@
+{
+  "extends": ["tslint:latest", "tslint-config-prettier"],
+  "rules": { "no-return-await": false, "no-submodule-imports": false, "no-console": false, "no-bitwise": false, "object-literal-sort-keys": false, "no-duplicate-imports": false
+  }
+}

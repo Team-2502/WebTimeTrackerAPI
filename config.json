@@ -1,0 +1,15 @@
+{
+  "web": {
+    "apiToken": "asddddddddddddddddddd",
+    "host": "localhost",
+    "ports": {
+      "http": 8080,
+      "https": 8443
+    }
+  },
+  "ssl": {
+    "key": "",
+    "cert": ""
+  },
+  "database": "mongodb://localhost:69696/team2502"
+}
