@@ -10,9 +10,7 @@ import {ValidationError} from "../../ValidationError";
 
 export class UserController implements IController {
     public initRoutes = (expressRouter: Router): void => {
-        expressRouter.get("/user/", [
-            APITokenMiddleware.checkForToken,
-        ], this.getAll);
+        expressRouter.get("/user/", this.getAll);
 
         expressRouter.get("/findActive", this.getActive);
 
@@ -24,9 +22,7 @@ export class UserController implements IController {
             APITokenMiddleware.checkForToken,
         ], this.endTracking);
 
-        expressRouter.get("/user/:user", [
-            APITokenMiddleware.checkForToken,
-        ], this.getEntries);
+        expressRouter.get("/user/:user", this.getEntries);
 
         expressRouter.get("/user/:user/expired", [
             APITokenMiddleware.checkForToken,
