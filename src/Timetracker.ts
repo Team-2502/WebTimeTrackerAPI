@@ -6,26 +6,13 @@ import {UserController} from "./api/controllers/UserController";
 import * as http from "http";
 import * as fs from "fs-extra";
 import * as https from "https";
-import bodyParser = require("body-parser");
-import ExpressValidator = require("express-validator");
 import * as mongoose from "mongoose";
 import {ValidationError} from "./ValidationError";
 import {TimeEntryController} from "./api/controllers/TimeEntryController";
-import PersonSchema, {PersonModel} from "./schemas/Person";
-import TimeEntrySchema from "./schemas/TimeEntry";
-import Person from "./schemas/Person";
-import TimeEntry from "./schemas/TimeEntry";
+import bodyParser = require("body-parser");
+import ExpressValidator = require("express-validator");
 
 export class Timetracker {
-    static get config(): IConfig {
-        return this._config;
-    }
-
-    static set config(value: IConfig) {
-        this._config = value;
-    }
-
-    private static _config: IConfig;
     private _express: Express.Express;
 
     constructor() {
@@ -39,11 +26,21 @@ export class Timetracker {
         });
     }
 
+    private static _config: IConfig;
+
+    static get config(): IConfig {
+        return this._config;
+    }
+
+    static set config(value: IConfig) {
+        this._config = value;
+    }
+
     private bootstrap = async (): Promise<void> => {
         try {
             await mongoose.connect(
                 Timetracker.config.database,
-                { useNewUrlParser: true }
+                {useNewUrlParser: true}
             );
         } catch (e) {
             console.log(e);
@@ -93,9 +90,9 @@ export class Timetracker {
         // Error handling
         this._express.use((err, req, res, next) => {
             console.log(err);
-            if(err instanceof ValidationError){
+            if (err instanceof ValidationError) {
                 res.json({error: true, message: err.json})
-            }else{
+            } else {
                 res.json({error: true, message: err.message});
             }
         });

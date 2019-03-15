@@ -71,6 +71,7 @@ export class UserController implements IController {
 
     private viewTop = async (req, res, next) => {
         const userTotal = new Map();
+
         let entries;
         try {
             entries = await TimeEntryModel.find({});
@@ -78,19 +79,25 @@ export class UserController implements IController {
             return next(e);
         }
 
-        console.log("got entries: " + JSON.stringify(entries));
-
         entries.forEach(entry => {
             if (!entry.timeEnded) return;
-            userTotal.set(entry._person, (userTotal.get(entry._person) || 0) + TimeUtil.dateDiffInDays(entry.timeStarted, entry.timeEnded));
+            const person = JSON.stringify(entry._person);
+            userTotal.set(person, (userTotal.get(person) || 0) + TimeUtil.dateDiff(entry.timeStarted, entry.timeEnded));
         });
 
-        let topValues = Array.from(userTotal.keys()).sort((a, b) => userTotal.get(a) - userTotal.get(b));
-        if (topValues.length > 10) {
-            topValues = topValues.slice(0, 10);
+        let topUsers = Array.from(userTotal.keys()).sort((a, b) => userTotal.get(a) - userTotal.get(b));
+        if (topUsers.length > 10) {
+            topUsers = topUsers.slice(0, 10);
         }
 
-        return res.json({topValues});
+        const topTimes = topUsers.map(topValue => {
+            return {
+                person: JSON.parse(topValue),
+                time: userTotal.get(topValue)
+            }
+        });
+
+        return res.json({topUsers: topTimes});
     };
 
     private addUser = async (req, res, next) => {
@@ -148,7 +155,7 @@ export class UserController implements IController {
         try {
             const user = PersonModel.findById(Types.ObjectId(req.params.user)).orFail();
             await user.remove();
-        }catch (e) {
+        } catch (e) {
             return next(e);
         }
     };
@@ -156,15 +163,15 @@ export class UserController implements IController {
     private getAll = async (req, res, next) => {
         try {
             return res.json({users: await PersonModel.find({})})
-        }catch (e) {
+        } catch (e) {
             return next(e);
         }
     };
 
     private getActive = async (req, res, next) => {
+        let activeEntries;
         try {
-
-            let activeEntries = await TimeEntryModel.find({
+            activeEntries = await TimeEntryModel.find({
                 timeEnded: undefined,
                 $or: [
                     {
@@ -174,15 +181,15 @@ export class UserController implements IController {
                         timedOut: undefined
                     }
                 ]
-            })
-
-            const activePeople = activeEntries.map(entry => { return entry._person });
-            console.log("active people: " + JSON.stringify(activePeople));
-            console.log("active entries: " + JSON.stringify(activeEntries));
-
-            return res.json({ activePeople: activePeople });
-        }catch (e) {
+            });
+        } catch (e) {
             return next(e);
         }
+        return res.json({
+            activePeople: activeEntries.map(entry => {
+                return entry._person
+            })
+        });
+
     }
 }

@@ -1,5 +1,3 @@
-import {Timetracker} from "../../Timetracker";
-
 export class APITokenMiddleware {
     public static checkForToken = async (req, res, next) => {
         // if(APITokenMiddleware.getToken(req) !== Timetracker.config.web.apiToken){
@@ -10,7 +8,7 @@ export class APITokenMiddleware {
 
     private static getToken = (req: any): string => {
         const {
-            headers: { authorization }
+            headers: {authorization}
         } = req;
 
         if (authorization && authorization.split(" ")[0] === "Token") {

@@ -1,6 +1,7 @@
-export class ValidationError{
+export class ValidationError {
     public json;
-    constructor(json: any){
+
+    constructor(json: any) {
         this.json = json;
     }
 }
