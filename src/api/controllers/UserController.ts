@@ -127,7 +127,8 @@ export class UserController implements IController {
                             timedOut: undefined
                         }
                     ]
-                })
+                }),
+                user: await PersonModel.findById(Types.ObjectId(req.params.user)).orFail()
             });
         } catch (e) {
             return next(e);
@@ -183,7 +184,10 @@ export class UserController implements IController {
         }
         return res.json({
             activePeople: activeEntries.map(entry => {
-                return entry._person
+                return {
+                    user: entry._person,
+                    timeStarted: entry.timeStarted
+                }
             })
         });
 

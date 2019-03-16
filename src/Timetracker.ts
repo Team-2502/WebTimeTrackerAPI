@@ -11,6 +11,7 @@ import {ValidationError} from "./ValidationError";
 import {TimeEntryController} from "./api/controllers/TimeEntryController";
 import bodyParser = require("body-parser");
 import ExpressValidator = require("express-validator");
+import {OnLoadController} from "./api/controllers/OnLoadController";
 
 export class Timetracker {
     private _express: Express.Express;
@@ -143,6 +144,9 @@ export class Timetracker {
 
         const entryController = new TimeEntryController();
         entryController.initRoutes(router);
+
+        const onLoadController = new OnLoadController();
+        onLoadController.initRoutes(router);
 
         this._express.use("/api/v1/", router);
     };

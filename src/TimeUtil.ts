@@ -4,3 +4,4 @@ export class TimeUtil {
         return Math.abs(dif / 1000);
     }
 }
+
