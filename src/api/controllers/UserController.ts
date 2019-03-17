@@ -114,14 +114,14 @@ export class UserController implements IController {
             userTotal.set(person, (userTotal.get(person) || 0) + TimeUtil.dateDiff(entry.timeStarted, entry.timeEnded));
         });
 
-        let topUsers = Array.from(userTotal.keys()).sort((a, b) => userTotal.get(a) - userTotal.get(b));
+        let topUsers = Array.from(userTotal.keys()).sort((a, b) => userTotal.get(a) - userTotal.get(b)).reverse();
         if (topUsers.length > 10) {
-            topUsers = topUsers.slice(0, 10);
+            topUsers = topUsers.slice(0, 2);
         }
 
         const topTimes = topUsers.map(topValue => {
             return {
-                person: JSON.parse(topValue),
+                user: JSON.parse(topValue),
                 time: userTotal.get(topValue)
             }
         });
