@@ -41,6 +41,39 @@ export class UserController implements IController {
         ], this.removeUser);
 
         expressRouter.get("/top", this.viewTop);
+        expressRouter.get("/viewInactive", this.getNonactive);
+
+    };
+
+    private getNonactive = async (req, res, next) => {
+        let entries;
+        let people;
+        try {
+            const getActiveEntries = TimeEntryModel.find({
+                timeEnded: undefined,
+                $or: [
+                    {
+                        timedOut: false
+                    },
+                    {
+                        timedOut: undefined
+                    }
+                ]
+            });
+
+            const getPeople = PersonModel.find({});
+
+            people = await getPeople;
+            entries = await getActiveEntries;
+        } catch (e) {
+            return next(e);
+        }
+
+        entries.forEach(entry => people = people.filter(person => person._id.toString() !== entry._person._id.toString()));
+
+        return res.json({
+            inactivePeople: people
+        });
     };
 
     private startTracking = async (req, res, next) => {
