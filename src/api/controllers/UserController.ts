@@ -36,7 +36,7 @@ export class UserController implements IController {
             check("lastName").isLength({min: 1, max: 100})
         ], this.addUser);
 
-        expressRouter.post("/user/remove", [
+        expressRouter.get("/user/:user/remove", [
             APITokenMiddleware.checkForToken,
         ], this.removeUser);
 
@@ -188,6 +188,8 @@ export class UserController implements IController {
         } catch (e) {
             return next(e);
         }
+
+        return res.json({});
     };
 
     private getAll = async (req, res, next) => {
