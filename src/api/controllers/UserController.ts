@@ -33,7 +33,9 @@ export class UserController implements IController {
             check("firstName").isString(),
             check("firstName").isLength({min: 1, max: 100}),
             check("lastName").isString(),
-            check("lastName").isLength({min: 1, max: 100})
+            check("lastName").isLength({min: 1, max: 100}),
+            check("password").isString(),
+            check("password").isLength({min: 5, max: 100})
         ], this.addUser);
 
         expressRouter.get("/user/:user/remove", [
@@ -42,7 +44,6 @@ export class UserController implements IController {
 
         expressRouter.get("/top", this.viewTop);
         expressRouter.get("/viewInactive", this.getNonactive);
-
     };
 
     private getNonactive = async (req, res, next) => {
@@ -109,7 +110,7 @@ export class UserController implements IController {
         }
 
         entries.forEach(entry => {
-            if (!entry.timeEnded) return;
+            if (!entry.timeEnded) { return; }
             const person = JSON.stringify(entry._person);
             userTotal.set(person, (userTotal.get(person) || 0) + TimeUtil.dateDiff(entry.timeStarted, entry.timeEnded));
         });
@@ -136,10 +137,14 @@ export class UserController implements IController {
         }
 
         try {
-            await new PersonModel({
+            const newUser =  new PersonModel({
                 firstName: req.body.firstName,
                 lastName: req.body.lastName
-            }).save();
+            });
+
+            await newUser.setPassword(req.body.password);
+            await newUser.save();
+
         } catch (e) {
             return next(e);
         }

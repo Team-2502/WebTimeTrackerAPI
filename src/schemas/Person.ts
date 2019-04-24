@@ -1,6 +1,8 @@
+import * as bcrypt from "bcrypt";
 import * as mongoose from "mongoose";
 import {Types} from "mongoose";
 import {instanceMethod, InstanceType, pre, prop, Typegoose} from "typegoose";
+import {Role} from "../Role";
 import TimeEntrySchema, {TimeEntryModel} from "./TimeEntry";
 
 @pre<PersonSchema>("save", async function (next) {
@@ -15,6 +17,21 @@ export default class PersonSchema extends Typegoose {
     @prop() public _id?: Types.ObjectId;
     @prop() public firstName: string;
     @prop() public lastName: string;
+
+    @prop({ enum: Role }) public role: Role;
+
+    @prop() private _passwordHash?: string;
+
+    @instanceMethod
+    public async setPassword(newPassword: string): Promise<void> {
+        const salt = await bcrypt.genSalt(10);
+        this._passwordHash = await bcrypt.hash(newPassword, salt);
+    }
+
+    @instanceMethod
+    public async comparePassword(password: string): Promise<boolean> {
+        return await bcrypt.compare(password, this._passwordHash);
+    }
 
     @instanceMethod
     public async getTimeEntries(): Promise<Array<InstanceType<TimeEntrySchema>>> {  // ok ok.
@@ -36,7 +53,7 @@ export default class PersonSchema extends Typegoose {
     @instanceMethod
     public async signIn(): Promise<void> {
         console.log("active time entries: " + JSON.stringify(await this.getActiveTimeEntry()));
-        if (await this.getActiveTimeEntry() !== null) throw new Error("User has an active time entry");
+        if (await this.getActiveTimeEntry() !== null) { throw new Error("User has an active time entry"); }
         const newEntry = new TimeEntryModel({
             timeStarted: new Date(),
             _person: this._id
@@ -47,7 +64,7 @@ export default class PersonSchema extends Typegoose {
     @instanceMethod
     public async signOut(): Promise<void> {
         const activeEntry = await this.getActiveTimeEntry();
-        if (!activeEntry) throw new Error("User does not have an active time entry");
+        if (!activeEntry) { throw new Error("User does not have an active time entry"); }
 
         activeEntry.timeEnded = new Date();
         await activeEntry.save();
