@@ -29,7 +29,6 @@ export class AuthMiddleware {
     };
 
     private static getSecret = (req, payload, done) => {
-        // This is here because typescript decided that it needed to compile some of this code instead of running it at runtime
         done(null, Timetracker.config.web.jwtSecret);
     };
 

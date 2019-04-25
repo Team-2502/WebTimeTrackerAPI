@@ -8,6 +8,7 @@ import {TimeUtil} from "../../TimeUtil";
 import {ValidationError} from "../../ValidationError";
 import {AuthMiddleware} from "../middleware/AuthMiddleware";
 import {IController} from "./IController";
+import {ExportToCsv} from "export-to-csv";
 
 export class UserController implements IController {
     public initRoutes = (expressRouter: Router): void => {
@@ -25,11 +26,13 @@ export class UserController implements IController {
             AuthMiddleware.isMentor
         ], this.endTracking);
 
-        expressRouter.get("/user/:user", this.getEntries);
-
         expressRouter.get("/user/changePassword", AuthMiddleware.jwtAuth.required, this.changePassword);
 
         expressRouter.get("/user/login", this.login);
+
+        expressRouter.get("/user/exportAll", this.exportAllAsCsv);
+
+        expressRouter.get("/user/:user", this.getEntries);
 
         expressRouter.get("/user/:user/expired", [
             AuthMiddleware.jwtAuth.required,
@@ -74,6 +77,47 @@ export class UserController implements IController {
 
         expressRouter.get("/top", this.viewTop);
         expressRouter.get("/viewInactive", this.getNonactive);
+    };
+
+    private exportAllAsCsv = async (req, res, next) => {
+        try{
+            const userTotal = new Map();
+
+            let entries;
+            try {
+                entries = await TimeEntryModel.find({});
+            } catch (e) {
+                return next(e);
+            }
+
+            entries.forEach(entry => {
+                if (!entry.timeEnded) { return; }
+                const person = JSON.stringify(entry._person);
+                userTotal.set(person, (userTotal.get(person) || 0) + TimeUtil.dateDiff(entry.timeStarted, entry.timeEnded));
+            });
+
+            res.setHeader('Content-Type', 'text/csv');
+            res.setHeader('Content-Disposition', 'attachment; filename=\"' + 'user-export-' + Date.now() + '.csv\"');
+
+            const csvExporter = new ExportToCsv({
+                useKeysAsHeaders: true,
+                title: "Time Tracker User Export",
+                showTitle: true,
+            });
+
+            const queryExport = [];
+            Array.from(userTotal.keys()).forEach(user => {
+                const jsonUser = JSON.parse(user);
+                queryExport.push({
+                    "Total Minutes": userTotal.get(user),
+                    "Person": jsonUser.firstName + " " + jsonUser.lastName
+                });
+            });
+
+            res.end(csvExporter.generateCsv(queryExport, true));
+        } catch (e) {
+            return next(e);
+        }
     };
 
     private changePassword = async (req, res, next) => {

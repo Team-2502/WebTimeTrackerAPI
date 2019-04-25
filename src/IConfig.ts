@@ -8,9 +8,5 @@ export interface IConfig {
             https: number
         }
     },
-    ssl: {
-        key: string,
-        cert: string
-    },
     database: string
 }

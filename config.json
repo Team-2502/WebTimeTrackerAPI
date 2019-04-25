@@ -7,9 +7,5 @@
       "https": 8443
     }
   },
-  "ssl": {
-    "key": "",
-    "cert": ""
-  },
   "database": "mongodb://ooooooooof:ooooooooof1@ds251598.mlab.com:51598/team2502"
 }

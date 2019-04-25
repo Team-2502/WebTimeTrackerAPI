@@ -110,38 +110,10 @@ export class Timetracker {
     };
 
     private createHttp = async (): Promise<void> => {
-        let httpServer;
-        let httpsServer;
-        if (process.env.NODE_ENV === "dev") {
-            // Create dev server
-            httpServer = http.createServer(this._express);
-        } else {
-            // Create redirect prod server
-            httpServer = http.createServer((req, res) => {
-                res.writeHead(301, {
-                    Location:
-                        "https://" +
-                        Timetracker.config.web.host +
-                        ":" +
-                        Timetracker.config.web.ports.https +
-                        req.url
-                });
-                res.end();
-            });
-
-            const creds = {
-                key: await fs.readFile(Timetracker.config.ssl.key),
-                cert: await fs.readFile(Timetracker.config.ssl.cert)
-            };
-
-            httpsServer = https.createServer(creds, this._express);
-        }
+        const httpServer = http.createServer(this._express);
 
         // Listen on the HTTP/HTTPS port
         httpServer.listen(Timetracker.config.web.ports.http);
-        if (httpsServer) {
-            httpsServer.listen(Timetracker.config.web.ports.https);
-        }
     };
 
     private mountRoutes = async (): Promise<void> => {
