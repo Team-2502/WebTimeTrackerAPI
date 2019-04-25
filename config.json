@@ -1,6 +1,6 @@
 {
   "web": {
-    "apiToken": "asddddddddddddddddddd",
+    "jwtSecret": "asddddddddddddddddddd",
     "host": "localhost",
     "ports": {
       "http": 8080,

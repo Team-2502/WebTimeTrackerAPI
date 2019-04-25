@@ -1,13 +1,13 @@
-import {IController} from "./IController";
-import {Router} from "express-serve-static-core";
-import {TimeEntryModel} from "../../schemas/TimeEntry";
+import {Router} from "express";
 import {Types} from "mongoose";
-import {APITokenMiddleware} from "../middleware/APITokenMiddleware";
+import {TimeEntryModel} from "../../schemas/TimeEntry";
+import {AuthMiddleware} from "../middleware/AuthMiddleware";
+import {IController} from "./IController";
 
 export class TimeEntryController implements IController {
     public initRoutes = (expressRouter: Router) => {
         expressRouter.get("/entry", this.getEntries);
-        expressRouter.get("/entry/:entry/remove", [APITokenMiddleware.checkForToken], this.getEntries);
+        expressRouter.get("/entry/:entry/remove", [AuthMiddleware.jwtAuth.required, AuthMiddleware.isMentor], this.getEntries);
     };
 
     private removeEntry = async (req, res, next) => {
