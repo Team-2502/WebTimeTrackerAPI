@@ -3,18 +3,15 @@ import {IConfig} from "./IConfig";
 import bodyParser = require("body-parser");
 import * as Express from "express";
 import ExpressValidator = require("express-validator");
-import * as fs from "fs-extra";
 import * as http from "http";
-import * as https from "https";
 import * as mongoose from "mongoose";
-import * as passport from "passport";
-import passportLocal = require("passport-local");
 import * as configJSON from "../config.json";
 import {OnLoadController} from "./api/controllers/OnLoadController";
 import {TimeEntryController} from "./api/controllers/TimeEntryController";
 import {UserController} from "./api/controllers/UserController";
-import {PersonModel} from "./schemas/Person";
 import {ValidationError} from "./ValidationError";
+import {Passport} from "./Passport";
+import {UnauthorizedError} from "express-jwt";
 
 export class Timetracker {
 
@@ -55,9 +52,6 @@ export class Timetracker {
         }
 
         this._express = Express();
-
-        // Configure Passport
-        this.configurePassport();
 
         // CORS
         this._express.disable("x-powered-by");
@@ -100,11 +94,16 @@ export class Timetracker {
         this._express.use((err, req, res, next) => {
             console.log(err);
             if (err instanceof ValidationError) {
-                res.json({error: true, message: err.json})
+                res.status(400).json({error: true, message: err.json})
+            } else if (err instanceof UnauthorizedError) {
+                res.status(401).json({error: true, message: "Unauthorized"})
             } else {
-                res.json({error: true, message: err.message});
+                res.status(500).json({error: true, message: err.message});
             }
         });
+
+        // Configure Passport
+        Passport.bootstrap();
 
         await this.createHttp();
     };
@@ -130,19 +129,4 @@ export class Timetracker {
 
         this._express.use("/api/v1/", router);
     };
-
-    private configurePassport = (): void => {
-        passport.use(new passportLocal.Strategy({
-            usernameField: "email",
-            passwordField: "password"
-        }, async (username, password, done) => {
-            try {
-                const user = await PersonModel.findOne({email: username}).orFail();
-                if (await user.comparePassword(password)) { return done(null, user); }
-                else { return done(null, false, { message: "Invalid username/password" }); }
-            } catch (e) {
-                return done(null, false, {message: e});
-            }
-        }))
-    }
 }

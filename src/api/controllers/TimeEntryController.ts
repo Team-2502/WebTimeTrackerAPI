@@ -1,5 +1,6 @@
 import {ExportToCsv} from "export-to-csv";
 import {Router} from "express";
+import {check} from "express-validator/check";
 import {Types} from "mongoose";
 import PersonSchema from "../../schemas/Person";
 import {TimeEntryModel} from "../../schemas/TimeEntry";
@@ -12,6 +13,17 @@ export class TimeEntryController implements IController {
         expressRouter.get("/entry", this.getEntries);
         expressRouter.get("/entry/download", this.exportAsCSV);
         expressRouter.get("/entry/:entry/remove", [AuthMiddleware.jwtAuth.required, AuthMiddleware.isMentor], this.removeEntry);
+        expressRouter.post('/entry/add', [
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor,
+            check("person").isMongoId(),
+            check("timeStarted").toDate(),
+            check("timeEnded").toDate()
+        ], this.addEntry)
+    };
+
+    private addEntry = async (req, res, next) => {
+
     };
 
     private exportAsCSV = async (req, res, next) => {

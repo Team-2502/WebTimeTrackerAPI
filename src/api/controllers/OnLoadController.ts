@@ -7,19 +7,22 @@ import {IController} from "./IController";
 
 export class OnLoadController implements IController{
     public initRoutes = (expressRouter: Router) => {
-        expressRouter.get("/onLoad", AuthMiddleware.jwtAuth.required, this.onLoad);
+        expressRouter.get("/onLoad", AuthMiddleware.jwtAuth.optional, this.onLoad);
     };
 
     private onLoad = async (req, res, next) => {
-        try {
-            const user = await PersonModel.findById(new ObjectID(req.payload.id)).orFail();
-            const isMentor = user.role === Role.MENTOR;
-
-            return res.json({
-                isAuthorized: isMentor
-            })
-        }catch (e) {
-            return next(e);
+        let isAuthorized = false;
+        if (req.payload && req.payload.id) {
+            try {
+                const user = await PersonModel.findById(new ObjectID(req.payload.id)).orFail();
+                isAuthorized = user.role === Role.MENTOR;
+            } catch (e) {
+                return next(e);
+            }
         }
+
+        return res.json({
+            isAuthorized
+        })
     };
 }

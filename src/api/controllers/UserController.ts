@@ -1,21 +1,20 @@
+import {ExportToCsv} from "export-to-csv";
 import {Router} from "express";
 import {check, validationResult} from "express-validator/check";
 import {Types} from "mongoose";
 import * as passport from "passport";
-import PersonSchema, {PersonModel} from "../../schemas/Person";
+import {PersonModel} from "../../schemas/Person";
 import {TimeEntryModel} from "../../schemas/TimeEntry";
 import {TimeUtil} from "../../TimeUtil";
 import {ValidationError} from "../../ValidationError";
 import {AuthMiddleware} from "../middleware/AuthMiddleware";
 import {IController} from "./IController";
-import {ExportToCsv} from "export-to-csv";
 
 export class UserController implements IController {
     public initRoutes = (expressRouter: Router): void => {
         expressRouter.get("/user/", this.getAll);
 
         expressRouter.get("/findActive", this.getActive);
-
         expressRouter.get("/user/:user/startTracking", [
             AuthMiddleware.jwtAuth.required,
             AuthMiddleware.isMentor
@@ -143,18 +142,24 @@ export class UserController implements IController {
             return next(new ValidationError(errors.array()));
         }
 
+        console.log("hi, " + req.body.email + ", " + req.body.password)
+
         try{
             const user: any = await new Promise((resolve, reject) => {
+                console.log("ub")
                 passport.authenticate("local", {
                     session: false
                 }, (err, passportUser) => {
+                    console.log("heeeelloo")
                     if (err) { return reject(err); }
                     else if (passportUser) { return resolve(passportUser); }
                     else { return reject(new Error("Failed to authenticate.")); }
-                })
+                })(req,res,next);
             });
 
             if(!user){ return next(new Error("Failed to authenticate.")); }
+
+            console.log("login?")
 
             return res.json({
                 user: user.getAuthJson()
