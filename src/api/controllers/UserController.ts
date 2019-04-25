@@ -1,12 +1,13 @@
-import {IController} from "./IController";
 import {Router} from "express";
-import {APITokenMiddleware} from "../middleware/APITokenMiddleware";
-import {PersonModel} from "../../schemas/Person";
+import {check, validationResult} from "express-validator/check";
 import {Types} from "mongoose";
+import * as passport from "passport";
+import PersonSchema, {PersonModel} from "../../schemas/Person";
 import {TimeEntryModel} from "../../schemas/TimeEntry";
 import {TimeUtil} from "../../TimeUtil";
-import {check, validationResult} from "express-validator/check";
 import {ValidationError} from "../../ValidationError";
+import {AuthMiddleware} from "../middleware/AuthMiddleware";
+import {IController} from "./IController";
 
 export class UserController implements IController {
     public initRoutes = (expressRouter: Router): void => {
@@ -15,35 +16,110 @@ export class UserController implements IController {
         expressRouter.get("/findActive", this.getActive);
 
         expressRouter.get("/user/:user/startTracking", [
-            APITokenMiddleware.checkForToken,
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor
         ], this.startTracking);
 
         expressRouter.get("/user/:user/endTracking", [
-            APITokenMiddleware.checkForToken,
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor
         ], this.endTracking);
 
         expressRouter.get("/user/:user", this.getEntries);
 
+        expressRouter.get("/user/changePassword", AuthMiddleware.jwtAuth.required, this.changePassword);
+
+        expressRouter.get("/user/login", this.login);
+
         expressRouter.get("/user/:user/expired", [
-            APITokenMiddleware.checkForToken,
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor
         ], this.getExpired);
 
         expressRouter.post("/user/add", [
-            APITokenMiddleware.checkForToken,
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor,
             check("firstName").isString(),
             check("firstName").isLength({min: 1, max: 100}),
             check("lastName").isString(),
             check("lastName").isLength({min: 1, max: 100}),
+            check("email").isEmail(),
+            check("email").isLength({min: 1, max: 100}),
             check("password").isString(),
-            check("password").isLength({min: 5, max: 100})
+            check("password").isLength({min: 5, max: 100}),
+            check("role").isString(),
+            check("role").custom(value => {
+                if (value !== "student" || value !== "mentor") { throw new Error("Role must be a student or mentor"); }
+            })
         ], this.addUser);
 
+        expressRouter.post("/user/login", [
+            check("email").isEmail(),
+            check("email").isLength({min: 1, max: 100}),
+            check("password").isString(),
+            check("password").isLength({min: 5, max: 100}),
+        ], this.login);
+
+        expressRouter.post("/user/changePassword", [
+            check("oldPassword").isString(),
+            check("oldPassword").isLength({min: 5, max: 100}),
+            check("newPassword").isString(),
+            check("newPassword").isLength({min: 5, max: 100}),
+        ], this.changePassword);
+
         expressRouter.get("/user/:user/remove", [
-            APITokenMiddleware.checkForToken,
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor
         ], this.removeUser);
 
         expressRouter.get("/top", this.viewTop);
         expressRouter.get("/viewInactive", this.getNonactive);
+    };
+
+    private changePassword = async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return next(new ValidationError(errors.array()));
+        }
+
+        try {
+            const user = await PersonModel.findById(req.payload.id).orFail();
+            if (! (await user.comparePassword(req.body.oldPassword))) { return next(new Error("Password does not match.")) }
+            await user.setPassword(req.body.newPassword);
+            await user.save();
+        } catch (e) {
+            return next(e);
+        }
+
+    };
+
+    private login = async (req, res, next) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return next(new ValidationError(errors.array()));
+        }
+
+        try{
+            const user: any = await new Promise((resolve, reject) => {
+                passport.authenticate("local", {
+                    session: false
+                }, (err, passportUser) => {
+                    if (err) { return reject(err); }
+                    else if (passportUser) { return resolve(passportUser); }
+                    else { return reject(new Error("Failed to authenticate.")); }
+                })
+            });
+
+            if(!user){ return next(new Error("Failed to authenticate.")); }
+
+            return res.json({
+                user: user.getAuthJson()
+            })
+
+        }catch (e) {
+            return next(e);
+        }
+
     };
 
     private getNonactive = async (req, res, next) => {
@@ -139,12 +215,13 @@ export class UserController implements IController {
         try {
             const newUser =  new PersonModel({
                 firstName: req.body.firstName,
-                lastName: req.body.lastName
+                lastName: req.body.lastName,
+                email: req.body.email,
+                role: req.body.role
             });
 
             await newUser.setPassword(req.body.password);
             await newUser.save();
-
         } catch (e) {
             return next(e);
         }

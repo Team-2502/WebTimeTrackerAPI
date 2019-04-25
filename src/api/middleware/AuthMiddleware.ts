@@ -1,5 +1,5 @@
 import {ObjectID} from "bson";
-import * as jwt from "express-jwt";
+import * as ejwt from "express-jwt";
 import {Role} from "../../Role";
 import {PersonModel} from "../../schemas/Person";
 import {Timetracker} from "../../Timetracker";
@@ -37,12 +37,12 @@ export class AuthMiddleware {
     /* tslint:disable:member-ordering */
     /* tslint:disable:object-literal-sort-keys */
     public static jwtAuth = {
-        required: jwt({
+        required: ejwt({
             secret: AuthMiddleware.getSecret,
             userProperty: "payload",
             getToken: AuthMiddleware.getToken
         }),
-        optional: jwt({
+        optional: ejwt({
             secret: AuthMiddleware.getSecret,
             userProperty: "payload",
             getToken: AuthMiddleware.getToken,

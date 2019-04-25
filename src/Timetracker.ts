@@ -1,19 +1,34 @@
 import {IConfig} from "./IConfig";
 
-import * as configJSON from "../config.json";
+import bodyParser = require("body-parser");
 import * as Express from "express";
-import {UserController} from "./api/controllers/UserController";
-import * as http from "http";
+import ExpressValidator = require("express-validator");
 import * as fs from "fs-extra";
+import * as http from "http";
 import * as https from "https";
 import * as mongoose from "mongoose";
-import {ValidationError} from "./ValidationError";
-import {TimeEntryController} from "./api/controllers/TimeEntryController";
-import bodyParser = require("body-parser");
-import ExpressValidator = require("express-validator");
+import * as passport from "passport";
+import passportLocal = require("passport-local");
+import * as configJSON from "../config.json";
 import {OnLoadController} from "./api/controllers/OnLoadController";
+import {TimeEntryController} from "./api/controllers/TimeEntryController";
+import {UserController} from "./api/controllers/UserController";
+import {PersonModel} from "./schemas/Person";
+import {ValidationError} from "./ValidationError";
 
 export class Timetracker {
+
+    static get config(): IConfig {
+        return this._config;
+    }
+
+    static set config(value: IConfig) {
+        this._config = value;
+    }
+
+    // tslint:disable-next-line:variable-name
+    private static _config: IConfig;
+    // tslint:disable-next-line:variable-name
     private _express: Express.Express;
 
     constructor() {
@@ -25,16 +40,6 @@ export class Timetracker {
             console.log("Failed to bootstrap");
             console.log(e);
         });
-    }
-
-    private static _config: IConfig;
-
-    static get config(): IConfig {
-        return this._config;
-    }
-
-    static set config(value: IConfig) {
-        this._config = value;
     }
 
     private bootstrap = async (): Promise<void> => {
@@ -50,6 +55,9 @@ export class Timetracker {
         }
 
         this._express = Express();
+
+        // Configure Passport
+        this.configurePassport();
 
         // CORS
         this._express.disable("x-powered-by");
@@ -150,4 +158,19 @@ export class Timetracker {
 
         this._express.use("/api/v1/", router);
     };
+
+    private configurePassport = (): void => {
+        passport.use(new passportLocal.Strategy({
+            usernameField: "email",
+            passwordField: "password"
+        }, async (username, password, done) => {
+            try {
+                const user = await PersonModel.findOne({email: username}).orFail();
+                if (await user.comparePassword(password)) { return done(null, user); }
+                else { return done(null, false, { message: "Invalid username/password" }); }
+            } catch (e) {
+                return done(null, false, {message: e});
+            }
+        }))
+    }
 }

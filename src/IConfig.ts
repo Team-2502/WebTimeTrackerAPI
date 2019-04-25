@@ -1,7 +1,7 @@
 export interface IConfig {
 
     web: {
-        apiToken: string,
+        jwtSecret: string,
         host: string
         ports: {
             http: number,

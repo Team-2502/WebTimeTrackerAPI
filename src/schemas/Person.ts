@@ -1,8 +1,10 @@
 import * as bcrypt from "bcrypt";
+import * as jwt from "jsonwebtoken";
 import * as mongoose from "mongoose";
 import {Types} from "mongoose";
 import {instanceMethod, InstanceType, pre, prop, Typegoose} from "typegoose";
 import {Role} from "../Role";
+import {Timetracker} from "../Timetracker";
 import TimeEntrySchema, {TimeEntryModel} from "./TimeEntry";
 
 @pre<PersonSchema>("save", async function (next) {
@@ -17,6 +19,7 @@ export default class PersonSchema extends Typegoose {
     @prop() public _id?: Types.ObjectId;
     @prop() public firstName: string;
     @prop() public lastName: string;
+    @prop() public email: string;
 
     @prop({ enum: Role }) public role: Role;
 
@@ -77,6 +80,36 @@ export default class PersonSchema extends Typegoose {
             timedOut: true
         });
     }
+
+    @instanceMethod
+    public getAuthJson(): any {
+        return {
+            token: this.generateJWT(),
+            firstName: this.firstName,
+            lastName: this.lastName,
+            id: this._id,
+            role: this.role
+        }
+    }
+
+    @instanceMethod
+    public generateJWT() {
+        const today = new Date();
+        const expirationDate = new Date(today);
+        expirationDate.setDate(today.getDate() + 182); // TODO: think about this...
+        return jwt.sign(
+            {
+                email: this.email,
+                firstName: this.firstName,
+                lastName: this.lastName,
+                role: this.role,
+                id: this._id,
+                exp: parseInt((expirationDate.getTime() / 1000).toString(), 10)
+            },
+            Timetracker.config.web.jwtSecret
+        );
+    }
+
 }
 
 export const PersonModel = new PersonSchema().getModelForClass(PersonSchema, {
