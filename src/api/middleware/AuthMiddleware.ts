@@ -9,7 +9,7 @@ export class AuthMiddleware {
     public static isMentor = async (req, res, next) => {
         try{
             const user = await PersonModel.findById(new ObjectID(req.payload.id)).orFail();
-            if (user.role !== Role.MENTOR) { return next(new Error("You do not have permission for this page.")); }
+            if (user.role !== Role.MENTOR) { return next('not_mentor', {message: 'You don\'t have permissions to access this page.' }); }
         }catch (e) {
             return next(e);
         }
@@ -22,7 +22,7 @@ export class AuthMiddleware {
             headers: { authorization }
         } = req;
 
-        if (authorization && authorization.split(" ")[0] === "Token") {
+        if (authorization && authorization.split(" ")[0] === "Bearer") {
             return authorization.split(" ")[1];
         }
         return null;
