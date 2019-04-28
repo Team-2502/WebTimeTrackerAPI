@@ -29,7 +29,7 @@ export class UserController implements IController {
 
         expressRouter.get("/user/login", this.login);
 
-        expressRouter.get("/user/exportAll", this.exportAllAsCsv);
+        expressRouter.get("/user/download", this.exportAllAsCsv);
 
         expressRouter.get("/user/:user", this.getEntries);
 
@@ -39,8 +39,8 @@ export class UserController implements IController {
         ], this.getExpired);
 
         expressRouter.post("/user/add", [
-            AuthMiddleware.jwtAuth.required,
-            AuthMiddleware.isMentor,
+            // AuthMiddleware.jwtAuth.required,
+            // AuthMiddleware.isMentor,
             check("firstName").isString(),
             check("firstName").isLength({min: 1, max: 100}),
             check("lastName").isString(),
@@ -49,9 +49,9 @@ export class UserController implements IController {
             check("email").isLength({min: 1, max: 100}),
             check("password").isString(),
             check("password").isLength({min: 5, max: 100}),
-            check("role").isString(),
             check("role").custom(value => {
-                if (value !== "student" || value !== "mentor") { throw new Error("Role must be a student or mentor"); }
+                if (value !== "student" && value !== "mentor") { throw new Error("Role must be a student or mentor"); }
+                return true; // This isn't in the docs but you need to return true.
             })
         ], this.addUser);
 
@@ -159,12 +159,11 @@ export class UserController implements IController {
 
             if(!user){ return next(new Error("Failed to authenticate.")); }
 
-            console.log("login?")
+            console.log("login?");
 
             return res.json({
                 user: user.getAuthJson()
             })
-
         }catch (e) {
             return next(e);
         }
@@ -195,7 +194,9 @@ export class UserController implements IController {
             return next(e);
         }
 
-        entries.forEach(entry => people = people.filter(person => person._id.toString() !== entry._person._id.toString()));
+        entries.forEach(entry =>
+            people = people.filter(person =>
+                person._id.toString() !== entry._person._id.toString()));
 
         return res.json({
             inactivePeople: people
