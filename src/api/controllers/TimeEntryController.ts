@@ -41,7 +41,9 @@ export class TimeEntryController implements IController {
 
             const queryExport = [];
             entries.forEach(entry => {
-                if(!entry.timeEnded ||!entry.timeStarted || entry.timedOut) { return; }
+                if(!entry.timeEnded ||!entry.timeStarted || entry.timedOut) {
+                    return;
+                }
 
                 queryExport.push({
                     "Time Started": entry.timeStarted,
@@ -69,7 +71,9 @@ export class TimeEntryController implements IController {
 
     private getEntries = async (req, res, next) => {
         try {
-            return res.json({entries: await TimeEntryModel.find({})});
+            return res.json({
+                entries: await TimeEntryModel.find({})
+            });
         } catch (e) {
             return next(e);
         }

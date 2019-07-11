@@ -39,8 +39,6 @@ export class UserController implements IController {
         ], this.getExpired);
 
         expressRouter.post("/user/add", [
-            AuthMiddleware.jwtAuth.required,
-            AuthMiddleware.isMentor,
             check("firstName").isString(),
             check("firstName").isLength({min: 1, max: 100}),
             check("lastName").isString(),
@@ -142,15 +140,11 @@ export class UserController implements IController {
             return next(new ValidationError(errors.array()));
         }
 
-        console.log("hi, " + req.body.email + ", " + req.body.password)
-
         try{
             const user: any = await new Promise((resolve, reject) => {
-                console.log("ub")
                 passport.authenticate("local", {
                     session: false
                 }, (err, passportUser) => {
-                    console.log("heeeelloo")
                     if (err) { return reject(err); }
                     else if (passportUser) { return resolve(passportUser); }
                     else { return reject(new Error("Failed to authenticate.")); }
@@ -158,8 +152,6 @@ export class UserController implements IController {
             });
 
             if(!user){ return next(new Error("Failed to authenticate.")); }
-
-            console.log("login?");
 
             return res.json({
                 user: user.getAuthJson()

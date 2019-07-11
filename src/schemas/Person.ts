@@ -55,7 +55,6 @@ export default class PersonSchema extends Typegoose {
 
     @instanceMethod
     public async signIn(): Promise<void> {
-        console.log("active time entries: " + JSON.stringify(await this.getActiveTimeEntry()));
         if (await this.getActiveTimeEntry() !== null) { throw new Error("User has an active time entry"); }
         const newEntry = new TimeEntryModel({
             timeStarted: new Date(),

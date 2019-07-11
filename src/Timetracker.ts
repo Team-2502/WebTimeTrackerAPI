@@ -32,7 +32,7 @@ export class Timetracker {
         Timetracker._config = configJSON;
 
         this.bootstrap().then(() => {
-            console.log("boi done")
+            console.log("Loaded")
         }).catch(e => {
             console.log("Failed to bootstrap");
             console.log(e);
@@ -92,7 +92,8 @@ export class Timetracker {
 
         // Error handling
         this._express.use((err, req, res, next) => {
-            console.log(err);
+            console.log("Caught error in request chain: ", err);
+            console.log("This is most likely not an issue.");
             if (err instanceof ValidationError) {
                 res.status(400).json({error: true, message: err.json})
             } else if (err instanceof UnauthorizedError) {
