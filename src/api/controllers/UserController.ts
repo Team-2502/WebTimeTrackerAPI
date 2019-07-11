@@ -39,8 +39,8 @@ export class UserController implements IController {
         ], this.getExpired);
 
         expressRouter.post("/user/add", [
-            // AuthMiddleware.jwtAuth.required,
-            // AuthMiddleware.isMentor,
+            AuthMiddleware.jwtAuth.required,
+            AuthMiddleware.isMentor,
             check("firstName").isString(),
             check("firstName").isLength({min: 1, max: 100}),
             check("lastName").isString(),
