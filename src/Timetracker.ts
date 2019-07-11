@@ -3,7 +3,6 @@ import {IConfig} from "./IConfig";
 import bodyParser = require("body-parser");
 import * as Express from "express";
 import {UnauthorizedError} from "express-jwt";
-import ExpressRateLimit = require("express-rate-limit");
 import ExpressValidator = require("express-validator");
 import * as http from "http";
 import * as mongoose from "mongoose";
@@ -81,15 +80,6 @@ export class Timetracker {
 
         // Validation
         this._express.use(ExpressValidator());
-
-        // Rate limit
-        this._express.use(new ExpressRateLimit({
-            windowMs: 5000,
-            max: 6,
-            onLimitReached: (req, res, optionsUsed) => {
-                res.status(429).end();
-            }
-        }));
 
         // Basic home page
         this._express.get("/", (req, res) => {
