@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "./code/dist/main.js"
+    "start": "./code/dist/main.js",
+    "run": "node -r ts-node/register main.ts"
   },
   "keywords": [],
   "author": "",
