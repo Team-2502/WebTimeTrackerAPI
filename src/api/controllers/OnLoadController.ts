@@ -11,17 +11,18 @@ export class OnLoadController implements IController{
     };
 
     private onLoad = async (req, res, next) => {
+        let isAuthorized = false;
         if (req.payload && req.payload.id) {
             try {
                 const user = await PersonModel.findById(new ObjectID(req.payload.id)).orFail();
-                const isAuthorized = user.role === Role.MENTOR;
-
-                return res.json({
-                    isAuthorized
-                })
+                isAuthorized = user.role === Role.MENTOR;
             } catch (e) {
                 return next(e);
             }
         }
+
+        return res.json({
+            isAuthorized
+        })
     };
 }
