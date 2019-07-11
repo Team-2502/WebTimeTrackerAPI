@@ -5,7 +5,6 @@ export interface IConfig {
         host: string
         ports: {
             http: number,
-            https: number
         }
     },
     database: string
