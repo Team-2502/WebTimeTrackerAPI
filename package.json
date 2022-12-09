@@ -33,7 +33,7 @@
     "body-parser": "^1.18.3",
     "bson": "^4.0.2",
     "export-to-csv": "^0.2.1",
-    "express": "^4.16.4",
+    "express": "^4.17.3",
     "express-jwt": "^5.3.1",
     "express-validator": "^5.3.1",
     "fs-extra": "^7.0.1",
